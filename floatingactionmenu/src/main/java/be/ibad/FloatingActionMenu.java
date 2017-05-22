@@ -1,11 +1,10 @@
 package be.ibad;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
-import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
@@ -206,6 +205,7 @@ public class FloatingActionMenu extends ViewGroup {
 
         addViewInLayout(menuButton, -1, new ViewGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         addView(backgroundView);
+        createOverlayRipple();
     }
 
     static int dpToPx(Context context, float dp) {
@@ -215,7 +215,6 @@ public class FloatingActionMenu extends ViewGroup {
 
     @Override
     protected void onFinishInflate() {
-//        bringChildToFront(backgroundView);
         bringChildToFront(menuButton);
         super.onFinishInflate();
     }
@@ -296,7 +295,6 @@ public class FloatingActionMenu extends ViewGroup {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void createOverlayRipple() {
         WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
@@ -305,58 +303,35 @@ public class FloatingActionMenu extends ViewGroup {
 
         int radius = menuButton.getHeight() / 2;
 
-        closeOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
-                menuButton.getLeft() + radius, menuButton.getTop() + radius, Math.max(size.x, size.y),
-                radius);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            closeOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
+                    menuButton.getLeft() + radius, menuButton.getTop() + radius,
+                    Math.max(size.x, size.y), radius);
+        } else {
+            closeOverlay = ObjectAnimator.ofFloat(backgroundView, "alpha", 1f, 0f);
+        }
         closeOverlay.setDuration(overlayDuration);
         closeOverlay.setInterpolator(new AccelerateDecelerateInterpolator());
-        closeOverlay.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
+        closeOverlay.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 backgroundView.setVisibility(GONE);
-                animation.end();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
             }
         });
 
-        openOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
-                menuButton.getLeft() + radius, menuButton.getTop() + radius, radius,
-                Math.max(size.x, size.y));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            openOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
+                    menuButton.getLeft() + radius, menuButton.getTop() + radius, radius,
+                    Math.max(size.x, size.y));
+        } else {
+            openOverlay = ObjectAnimator.ofFloat(backgroundView, "alpha", 0f, 1f);
+        }
         openOverlay.setDuration(overlayDuration);
         openOverlay.setInterpolator(new AccelerateDecelerateInterpolator());
-        openOverlay.addListener(new Animator.AnimatorListener() {
+        openOverlay.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
                 backgroundView.setVisibility(VISIBLE);
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                animation.end();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
             }
         });
     }
@@ -370,7 +345,6 @@ public class FloatingActionMenu extends ViewGroup {
     }
 
     protected void startOpenAnimator() {
-        createOverlayRipple();
         openOverlay.start();
         openSet.start();
         for (ChildAnimator anim : itemAnimators) {
@@ -527,31 +501,8 @@ public class FloatingActionMenu extends ViewGroup {
         ObjectAnimator collapseAnimator = ObjectAnimator.ofFloat(menuButton, "rotation", 135f, 0f);
         ObjectAnimator expandAnimator = ObjectAnimator.ofFloat(menuButton, "rotation", 0f, 135f);
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            openSet.playTogether(expandAnimator);
-            closeSet.playTogether(collapseAnimator);
-        } else {
-
-            ValueAnimator hideBackgroundAnimator = ObjectAnimator.ofInt(0xff, 0);
-            hideBackgroundAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    Integer alpha = (Integer) animation.getAnimatedValue();
-                    getBackground().setAlpha(alpha > 0xff ? 0xff : alpha);
-                }
-            });
-            ValueAnimator showBackgroundAnimator = ObjectAnimator.ofInt(0, 0xff);
-            showBackgroundAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    Integer alpha = (Integer) animation.getAnimatedValue();
-                    getBackground().setAlpha(alpha > 0xff ? 0xff : alpha);
-                }
-            });
-
-            openSet.playTogether(expandAnimator, showBackgroundAnimator);
-            closeSet.playTogether(collapseAnimator, hideBackgroundAnimator);
-        }
+        openSet.playTogether(expandAnimator);
+        closeSet.playTogether(collapseAnimator);
 
         openSet.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
         closeSet.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
