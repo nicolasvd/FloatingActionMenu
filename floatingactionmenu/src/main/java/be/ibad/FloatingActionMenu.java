@@ -10,13 +10,16 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.Display;
@@ -79,10 +82,13 @@ public class FloatingActionMenu extends ViewGroup {
     private int menuButtonBackground;
     private int menuButtonRipple;
     private int menuButtonSrc;
+    @ColorInt
     private int overlayBackground;
     private int buttonSpacing;
     private int maxButtonWidth;
-    private int labelBackground;
+    @ColorInt
+    private int labelBackgroundColor;
+    @ColorInt
     private int labelTextColor;
     private int menuMarginEnd;
     private int menuMarginBottom;
@@ -157,8 +163,8 @@ public class FloatingActionMenu extends ViewGroup {
                     .getInteger(R.styleable.FloatingActionMenu_overlay_duration, 500);
             actionsDuration = attributes
                     .getInteger(R.styleable.FloatingActionMenu_actions_duration, 300);
-            labelBackground = attributes
-                    .getResourceId(R.styleable.FloatingActionMenu_label_background, R.drawable.label_background);
+            labelBackgroundColor = attributes
+                    .getColor(R.styleable.FloatingActionMenu_label_background, ContextCompat.getColor(getContext(), android.R.color.white));
             labelTextColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_label_fontColor, Color.BLACK);
             labelTextSize = attributes
@@ -242,7 +248,8 @@ public class FloatingActionMenu extends ViewGroup {
     private void buildLabelButton(FloatingActionButton item) {
 
         View label = View.inflate(getContext(), R.layout.label_layout, null);
-        label.setBackgroundResource(labelBackground);
+        label.setBackgroundResource(R.drawable.label_background);
+        label.getBackground().mutate().setColorFilter(labelBackgroundColor, PorterDuff.Mode.SRC_IN);
 
         TextView textView = (TextView) label.findViewById(R.id.label_text);
         textView.setText(item.getContentDescription());
