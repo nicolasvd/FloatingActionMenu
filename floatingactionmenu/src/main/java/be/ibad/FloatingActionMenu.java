@@ -22,6 +22,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -143,26 +144,28 @@ public class FloatingActionMenu extends ViewGroup {
         super(context, attrs, defStyleAttr);
         TypedArray attributes = context.getTheme()
                 .obtainStyledAttributes(attrs, R.styleable.FloatingActionMenu, 0, 0);
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.colorAccent, typedValue, true);
+        int colorAccent = typedValue.data;
 
         try {
             overlayBackground = attributes
                     .getColor(R.styleable.FloatingActionMenu_overlay_color, Color.parseColor("#7F2a3441"));
             buttonSpacing = attributes
-                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_item_spacing, dpToPx(context, 8f));
-            menuButtonBackground = attributes
-                    .getColor(R.styleable.FloatingActionMenu_base_background, Color.RED);
+                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_item_spacing, dpToPx(context, 4f));
+            menuButtonBackground = attributes.getColor(R.styleable.FloatingActionMenu_base_background, colorAccent);
             menuButtonRipple = attributes
                     .getColor(R.styleable.FloatingActionMenu_base_ripple, Color.parseColor("#66ffffff"));
             menuButtonSrc = attributes
                     .getResourceId(R.styleable.FloatingActionMenu_base_src, R.drawable.ic_positive);
             menuMarginEnd = attributes
-                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_base_marginEnd, 0);
+                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_base_marginEnd, dpToPx(context, 8f));
             menuMarginBottom = attributes
-                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_base_marginBottom, 0);
+                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_base_marginBottom, dpToPx(context, 8f));
             overlayDuration = attributes
-                    .getInteger(R.styleable.FloatingActionMenu_overlay_duration, 500);
+                    .getInteger(R.styleable.FloatingActionMenu_overlay_duration, getResources().getInteger(android.R.integer.config_shortAnimTime));
             actionsDuration = attributes
-                    .getInteger(R.styleable.FloatingActionMenu_actions_duration, 300);
+                    .getInteger(R.styleable.FloatingActionMenu_actions_duration, getResources().getInteger(android.R.integer.config_shortAnimTime));
             labelBackgroundColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_label_background, ContextCompat.getColor(getContext(), android.R.color.white));
             labelTextColor = attributes
@@ -172,7 +175,7 @@ public class FloatingActionMenu extends ViewGroup {
             displayLabels = attributes
                     .getBoolean(R.styleable.FloatingActionMenu_enable_labels, true);
             labelMarginEnd = attributes
-                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_label_marginEnd, 0);
+                    .getDimensionPixelSize(R.styleable.FloatingActionMenu_label_marginEnd, dpToPx(context, 4f));
         } finally {
             attributes.recycle();
         }
@@ -211,7 +214,6 @@ public class FloatingActionMenu extends ViewGroup {
 
         addViewInLayout(menuButton, -1, new ViewGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         addView(backgroundView);
-        createOverlayRipple();
     }
 
     static int dpToPx(Context context, float dp) {
@@ -302,7 +304,7 @@ public class FloatingActionMenu extends ViewGroup {
         }
     }
 
-    private void createOverlayRipple() {
+    private void createOverlayRippleAnimation() {
         WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
         Point size = new Point();
@@ -352,6 +354,7 @@ public class FloatingActionMenu extends ViewGroup {
     }
 
     protected void startOpenAnimator() {
+        createOverlayRippleAnimation();
         openOverlay.start();
         openSet.start();
         for (ChildAnimator anim : itemAnimators) {
@@ -579,7 +582,6 @@ public class FloatingActionMenu extends ViewGroup {
 
         @Override
         public boolean layoutDependsOn(CoordinatorLayout parent, FloatingActionMenu child, View dependency) {
-            // We're dependent on all SnackbarLayouts (if enabled)
             return dependency instanceof Snackbar.SnackbarLayout;
         }
 
