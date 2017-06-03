@@ -249,7 +249,7 @@ public class FloatingActionMenu extends ViewGroup {
     private void buildLabelButton(FloatingActionButton item) {
 
         View label = View.inflate(getContext(), R.layout.label_layout, null);
-        label.setAlpha(0f);
+
         label.setBackgroundResource(R.drawable.label_background);
         label.getBackground().mutate().setColorFilter(labelBackgroundColor, PorterDuff.Mode.SRC_IN);
 
@@ -457,6 +457,9 @@ public class FloatingActionMenu extends ViewGroup {
 
                         if (!isAnimating) {
                             if (!isOpen) {
+                                //TODO init label value
+                                label.setTranslationX(item.getLeft() - label.getLeft());
+                                label.setAlpha(0f);
                                 label.setVisibility(INVISIBLE);
                             }
                         }
@@ -467,6 +470,7 @@ public class FloatingActionMenu extends ViewGroup {
 
                     if (!isAnimating) {
                         if (!isOpen) {
+                            //TODO init child value
                             item.setTranslationY(menuButton.getTop() - item.getTop());
                             item.setVisibility(INVISIBLE);
                             backgroundView.setVisibility(INVISIBLE);
@@ -599,9 +603,11 @@ public class FloatingActionMenu extends ViewGroup {
 
         AnimatorSet getCloseAnimatorSet() {
             AnimatorSet closeAnimatorSet = new AnimatorSet();
-            ObjectAnimator closeLabelAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 1f, 0f);
-            ObjectAnimator closeChildAnimator = ObjectAnimator.ofFloat(mChild, "translationY", menuButton.getTop() - mChild.getTop());
-            closeChildAnimator.addListener(new AnimatorListenerAdapter() {
+
+            ObjectAnimator closeLabelAlphaAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 1f, 0f);
+            ObjectAnimator closeLabelTranslateAnimator = ObjectAnimator.ofFloat(mLabel, "translationX", mChild.getLeft() - mLabel.getLeft());
+            ObjectAnimator closeChildTranslateAnimator = ObjectAnimator.ofFloat(mChild, "translationY", menuButton.getTop() - mChild.getTop());
+            closeChildTranslateAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
@@ -612,16 +618,20 @@ public class FloatingActionMenu extends ViewGroup {
                 }
             });
             closeAnimatorSet.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
-            closeAnimatorSet.play(closeChildAnimator).after(closeLabelAnimator);
+            closeAnimatorSet
+                    .play(closeLabelAlphaAnimator)
+                    .with(closeLabelTranslateAnimator)
+                    .before(closeChildTranslateAnimator);
 
             return closeAnimatorSet;
         }
 
         AnimatorSet getOpenAnimatorSet() {
             AnimatorSet openAnimatorSet = new AnimatorSet();
-            ObjectAnimator openLabelAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 0f, 1f);
-            ObjectAnimator openChildAnimator = ObjectAnimator.ofFloat(mChild, "translationY", 0f);
-            openChildAnimator.addListener(new AnimatorListenerAdapter() {
+            ObjectAnimator openLabelAlphaAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 0f, 1f);
+            ObjectAnimator openLabelTranslateAnimator = ObjectAnimator.ofFloat(mLabel, "translationX", 0f);
+            ObjectAnimator openChildTranslateAnimator = ObjectAnimator.ofFloat(mChild, "translationY", 0f);
+            openChildTranslateAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
                     super.onAnimationStart(animation);
@@ -632,7 +642,10 @@ public class FloatingActionMenu extends ViewGroup {
                 }
             });
             openAnimatorSet.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
-            openAnimatorSet.play(openChildAnimator).before(openLabelAnimator);
+            openAnimatorSet
+                    .play(openLabelAlphaAnimator)
+                    .with(openLabelTranslateAnimator)
+                    .after(openChildTranslateAnimator);
 
             return openAnimatorSet;
         }
