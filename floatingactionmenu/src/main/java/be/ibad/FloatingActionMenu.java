@@ -31,7 +31,6 @@ import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
@@ -250,6 +249,7 @@ public class FloatingActionMenu extends ViewGroup {
     private void buildLabelButton(FloatingActionButton item) {
 
         View label = View.inflate(getContext(), R.layout.label_layout, null);
+        label.setAlpha(0f);
         label.setBackgroundResource(R.drawable.label_background);
         label.getBackground().mutate().setColorFilter(labelBackgroundColor, PorterDuff.Mode.SRC_IN);
 
@@ -349,7 +349,7 @@ public class FloatingActionMenu extends ViewGroup {
         closeSet.start();
         closeOverlay.start();
         for (ChildAnimator anim : itemAnimators) {
-            anim.startCloseAnimator();
+            anim.getCloseAnimatorSet().start();
         }
     }
 
@@ -358,7 +358,7 @@ public class FloatingActionMenu extends ViewGroup {
         openOverlay.start();
         openSet.start();
         for (ChildAnimator anim : itemAnimators) {
-            anim.startOpenAnimator();
+            anim.getOpenAnimatorSet().start();
         }
     }
 
@@ -486,7 +486,7 @@ public class FloatingActionMenu extends ViewGroup {
     }
 
     private void createDefaultIconAnimation() {
-        Animator.AnimatorListener listener = new Animator.AnimatorListener() {
+        Animator.AnimatorListener listener = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
                 isAnimating = true;
@@ -500,11 +500,6 @@ public class FloatingActionMenu extends ViewGroup {
             @Override
             public void onAnimationCancel(Animator animation) {
                 isAnimating = false;
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
             }
         };
 
@@ -593,80 +588,53 @@ public class FloatingActionMenu extends ViewGroup {
         }
     }
 
-    class ChildAnimator implements Animator.AnimatorListener {
-        private View view;
-        private View label;
-        private AlphaAnimation openAnimation;
-        private AlphaAnimation closeAnimation;
-        private boolean playingOpenAnimator;
+    private class ChildAnimator {
+        final View mLabel;
+        final View mChild;
 
-        ChildAnimator(View view) {
-            view.animate().setListener(this);
-            if (displayLabels) {
-                label = (View) view.getTag();
-                openAnimation = new AlphaAnimation(0f, 1f);
-                openAnimation.setDuration(250);
-
-                closeAnimation = new AlphaAnimation(1f, 0f);
-                closeAnimation.setDuration(250);
-            }
-            this.view = view;
+        ChildAnimator(final View view) {
+            mLabel = (View) view.getTag();
+            this.mChild = view;
         }
 
-        void startOpenAnimator() {
-            view.animate().cancel();
-            playingOpenAnimator = true;
-
-            view.animate()
-                    .translationY(0)
-                    .setInterpolator(DEFAULT_OPEN_INTERPOLATOR)
-                    .start();
-        }
-
-        void startCloseAnimator() {
-            view.animate().cancel();
-            playingOpenAnimator = false;
-
-            if (displayLabels) {
-                label.startAnimation(closeAnimation);
-            }
-            view.animate()
-                    .translationY((menuButton.getTop() - view.getTop()))
-                    .setInterpolator(DEFAULT_CLOSE_INTERPOLATOR)
-                    .start();
-        }
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-            if (playingOpenAnimator) {
-                view.setVisibility(VISIBLE);
-            } else {
-                if (displayLabels) {
-                    label.setVisibility(GONE);
+        AnimatorSet getCloseAnimatorSet() {
+            AnimatorSet closeAnimatorSet = new AnimatorSet();
+            ObjectAnimator closeLabelAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 1f, 0f);
+            ObjectAnimator closeChildAnimator = ObjectAnimator.ofFloat(mChild, "translationY", menuButton.getTop() - mChild.getTop());
+            closeChildAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    mChild.setVisibility(GONE);
+                    if (displayLabels) {
+                        mLabel.setVisibility(GONE);
+                    }
                 }
-            }
+            });
+            closeAnimatorSet.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
+            closeAnimatorSet.play(closeChildAnimator).after(closeLabelAnimator);
+
+            return closeAnimatorSet;
         }
 
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            if (!playingOpenAnimator) {
-                view.setVisibility(GONE);
-            } else {
-                if (displayLabels) {
-                    label.setVisibility(VISIBLE);
-                    label.startAnimation(openAnimation);
+        AnimatorSet getOpenAnimatorSet() {
+            AnimatorSet openAnimatorSet = new AnimatorSet();
+            ObjectAnimator openLabelAnimator = ObjectAnimator.ofFloat(mLabel, "alpha", 0f, 1f);
+            ObjectAnimator openChildAnimator = ObjectAnimator.ofFloat(mChild, "translationY", 0f);
+            openChildAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    mChild.setVisibility(VISIBLE);
+                    if (displayLabels) {
+                        mLabel.setVisibility(VISIBLE);
+                    }
                 }
-            }
-        }
+            });
+            openAnimatorSet.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
+            openAnimatorSet.play(openChildAnimator).before(openLabelAnimator);
 
-        @Override
-        public void onAnimationCancel(Animator animation) {
-
-        }
-
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-
+            return openAnimatorSet;
         }
     }
 }
