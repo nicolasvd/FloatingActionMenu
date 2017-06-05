@@ -61,7 +61,6 @@ public class FloatingActionMenu extends ViewGroup {
     private List<OnMenuToggleListener> openListeners;
 
     private boolean isOpen;
-    private boolean isAnimating;
     private boolean displayLabels;
     private boolean isCloseOnTouchOutside = true;
     private long actionsDuration;
@@ -287,22 +286,6 @@ public class FloatingActionMenu extends ViewGroup {
         AnimatorSet closeSet = new AnimatorSet();
         closeSet.play(getCloseOverlayAnimator()).with(collapseIconAnimator);
         closeSet.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
-        closeSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                isAnimating = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                isAnimating = false;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                isAnimating = false;
-            }
-        });
         closeSet.start();
 
         for (ChildAnimator anim : itemAnimators) {
@@ -314,22 +297,6 @@ public class FloatingActionMenu extends ViewGroup {
         AnimatorSet openSet = new AnimatorSet();
         openSet.play(getOpenOverlayAnimator()).with(expandIconAnimator);
         openSet.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
-        openSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                isAnimating = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                isAnimating = false;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                isAnimating = false;
-            }
-        });
         openSet.start();
 
         for (ChildAnimator anim : itemAnimators) {
@@ -485,28 +452,24 @@ public class FloatingActionMenu extends ViewGroup {
 
                         label.layout(labelXStart, labelTop, labelXEnd, labelTop + label.getMeasuredHeight());
 
-                        if (!isAnimating) {
                             if (!isOpen) {
                                 label.setTranslationX(item.getLeft() - label.getLeft());
                                 label.setAlpha(0f);
                                 label.setVisibility(INVISIBLE);
                             }
-                        }
                     }
 
                     nextY = childY;
 
-                    if (!isAnimating) {
                         if (!isOpen) {
                             item.setTranslationY(menuButton.getTop() - item.getTop());
                             item.setVisibility(INVISIBLE);
                             backgroundView.setVisibility(INVISIBLE);
                         }
-                    }
                 }
             }
 
-            if (!isAnimating && getBackground() != null) {
+            if (getBackground() != null) {
                 if (!isOpen) {
                     getBackground().setAlpha(0);
                 } else {
