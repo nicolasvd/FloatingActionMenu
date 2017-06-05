@@ -69,7 +69,8 @@ public class FloatingActionMenu extends ViewGroup {
     private long actionsDuration;
     @ColorInt
     private int mMenuButtonColor;
-    private int menuButtonRipple;
+    @ColorInt
+    private int mMenuRippleColor;
     private int menuButtonSrc;
     @ColorInt
     private int mOverlayColor;
@@ -131,7 +132,7 @@ public class FloatingActionMenu extends ViewGroup {
             buttonSpacing = attributes
                     .getDimensionPixelSize(R.styleable.FloatingActionMenu_item_spacing, dpToPx(context, 4f));
             mMenuButtonColor = attributes.getColor(R.styleable.FloatingActionMenu_base_background, colorAccent);
-            menuButtonRipple = attributes
+            mMenuRippleColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_base_ripple, Color.parseColor("#66ffffff"));
             menuButtonSrc = attributes
                     .getResourceId(R.styleable.FloatingActionMenu_base_src, R.drawable.ic_positive);
@@ -166,7 +167,7 @@ public class FloatingActionMenu extends ViewGroup {
         mMenuButton = new FloatingActionButton(getContext());
         mMenuButton.setSize(FloatingActionButton.SIZE_AUTO);
         mMenuButton.setBackgroundTintList(ColorStateList.valueOf(mMenuButtonColor));
-        mMenuButton.setRippleColor(menuButtonRipple);
+        mMenuButton.setRippleColor(mMenuRippleColor);
         mMenuButton.setImageResource(menuButtonSrc);
         mMenuButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -251,21 +252,32 @@ public class FloatingActionMenu extends ViewGroup {
         setOverlayColor(ContextCompat.getColor(getContext(), colorRes));
     }
 
+    public void setMenuButtonColorRes(@ColorRes int colorRes) {
+        setMenuButtonColor(ContextCompat.getColor(getContext(), colorRes));
+    }
+
+    public void setMenuRippleColorRes(@ColorRes int colorRes) {
+        setMenuRippleColor(ContextCompat.getColor(getContext(), colorRes));
+    }
+
     public void setOverlayColor(@ColorInt int color) {
         this.mOverlayColor = color;
         if (mBackgroundView != null) {
-            mBackgroundView.setBackgroundColor(color);
+            mBackgroundView.setBackgroundColor(mOverlayColor);
         }
-    }
-
-    public void setMenuButtonColorRes(@ColorRes int colorRes) {
-        setMenuButtonColor(ContextCompat.getColor(getContext(), colorRes));
     }
 
     public void setMenuButtonColor(@ColorInt int color) {
         this.mMenuButtonColor = color;
         if (mMenuButton != null) {
-            mMenuButton.setBackgroundTintList(ColorStateList.valueOf(color));
+            mMenuButton.setBackgroundTintList(ColorStateList.valueOf(mMenuButtonColor));
+        }
+    }
+
+    public void setMenuRippleColor(@ColorInt int color) {
+        this.mMenuRippleColor = color;
+        if (mMenuButton != null) {
+            mMenuButton.setRippleColor(mMenuRippleColor);
         }
     }
 
