@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -71,7 +72,8 @@ public class FloatingActionMenu extends ViewGroup {
     private int mMenuButtonColor;
     @ColorInt
     private int mMenuRippleColor;
-    private int menuButtonSrc;
+    @DrawableRes
+    private int mMenuButtonRes;
     @ColorInt
     private int mOverlayColor;
     private int buttonSpacing;
@@ -134,7 +136,7 @@ public class FloatingActionMenu extends ViewGroup {
             mMenuButtonColor = attributes.getColor(R.styleable.FloatingActionMenu_base_background, colorAccent);
             mMenuRippleColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_base_ripple, Color.parseColor("#66ffffff"));
-            menuButtonSrc = attributes
+            mMenuButtonRes = attributes
                     .getResourceId(R.styleable.FloatingActionMenu_base_src, R.drawable.ic_positive);
             menuMarginEnd = attributes
                     .getDimensionPixelSize(R.styleable.FloatingActionMenu_base_marginEnd, dpToPx(context, 8f));
@@ -168,7 +170,7 @@ public class FloatingActionMenu extends ViewGroup {
         mMenuButton.setSize(FloatingActionButton.SIZE_AUTO);
         mMenuButton.setBackgroundTintList(ColorStateList.valueOf(mMenuButtonColor));
         mMenuButton.setRippleColor(mMenuRippleColor);
-        mMenuButton.setImageResource(menuButtonSrc);
+        mMenuButton.setImageResource(mMenuButtonRes);
         mMenuButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -258,6 +260,13 @@ public class FloatingActionMenu extends ViewGroup {
 
     public void setMenuRippleColorRes(@ColorRes int colorRes) {
         setMenuRippleColor(ContextCompat.getColor(getContext(), colorRes));
+    }
+
+    public void setMenuButtonRes(@DrawableRes int mMenuButtonRes) {
+        this.mMenuButtonRes = mMenuButtonRes;
+        if (mMenuButton != null) {
+            mMenuButton.setImageResource(mMenuButtonRes);
+        }
     }
 
     public void setOverlayColor(@ColorInt int color) {
