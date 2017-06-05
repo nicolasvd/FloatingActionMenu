@@ -52,7 +52,7 @@ public class FloatingActionMenu extends ViewGroup {
     private List<FloatingActionButton> menuItems;
     private List<View> menuLabels;
     private List<ChildAnimator> itemAnimators;
-    private View backgroundView;
+    private View mBackgroundView;
 
     private Animator openOverlay;
     private Animator closeOverlay;
@@ -70,9 +70,8 @@ public class FloatingActionMenu extends ViewGroup {
     private int menuButtonRipple;
     private int menuButtonSrc;
     @ColorInt
-    private int overlayBackground;
+    private int mOverlayColor;
     private int buttonSpacing;
-    private int maxButtonWidth;
     @ColorInt
     private int labelBackgroundColor;
     @ColorInt
@@ -100,7 +99,7 @@ public class FloatingActionMenu extends ViewGroup {
             if (view instanceof FloatingActionButton) {
                 int i = menuItems.indexOf(view);
                 triggerClickListeners(i, (FloatingActionButton) view);
-            } else if (view != backgroundView) {
+            } else if (view != mBackgroundView) {
                 int i = menuLabels.indexOf(view);
                 triggerClickListeners(i, menuItems.get(i));
             }
@@ -125,7 +124,7 @@ public class FloatingActionMenu extends ViewGroup {
         int colorAccent = typedValue.data;
 
         try {
-            overlayBackground = attributes
+            mOverlayColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_overlay_color, Color.parseColor("#7F2a3441"));
             buttonSpacing = attributes
                     .getDimensionPixelSize(R.styleable.FloatingActionMenu_item_spacing, dpToPx(context, 4f));
@@ -174,9 +173,9 @@ public class FloatingActionMenu extends ViewGroup {
             }
         });
 
-        backgroundView = new View(getContext());
-        backgroundView.setBackgroundColor(overlayBackground);
-        backgroundView.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
+        mBackgroundView = new View(getContext());
+        mBackgroundView.setBackgroundColor(mOverlayColor);
+        mBackgroundView.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
                 closeIconAnimator = ObjectAnimator.ofFloat(menuButton, "rotation", 135f, 0f).setDuration(actionsDuration);
@@ -192,7 +191,7 @@ public class FloatingActionMenu extends ViewGroup {
         });
 
         addViewInLayout(menuButton, -1, new ViewGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-        addView(backgroundView);
+        addView(mBackgroundView);
     }
 
     static int dpToPx(Context context, float dp) {
@@ -244,6 +243,13 @@ public class FloatingActionMenu extends ViewGroup {
         item.setTag(label);
 
         label.setOnClickListener(onItemClickListener);
+    }
+
+    public void setOverlayColor(@ColorInt int overlayColor) {
+        this.mOverlayColor = overlayColor;
+        if (mBackgroundView != null) {
+            mBackgroundView.setBackgroundColor(overlayColor);
+        }
     }
 
     public void toggle() {
@@ -312,13 +318,13 @@ public class FloatingActionMenu extends ViewGroup {
             display.getSize(size);
             int radius = menuButton.getHeight() / 2;
 
-            closeOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
+            closeOverlay = ViewAnimationUtils.createCircularReveal(mBackgroundView,
                     menuButton.getLeft() + radius, menuButton.getTop() + radius,
                     Math.max(size.x, size.y), radius);
 
         } else {
             if (closeOverlay == null) {
-                closeOverlay = ObjectAnimator.ofFloat(backgroundView, "alpha", 1f, 0f);
+                closeOverlay = ObjectAnimator.ofFloat(mBackgroundView, "alpha", 1f, 0f);
                 closeOverlay.setInterpolator(new AccelerateDecelerateInterpolator());
             }
         }
@@ -326,7 +332,7 @@ public class FloatingActionMenu extends ViewGroup {
         closeOverlay.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                backgroundView.setVisibility(GONE);
+                mBackgroundView.setVisibility(GONE);
             }
         });
         return closeOverlay;
@@ -340,12 +346,12 @@ public class FloatingActionMenu extends ViewGroup {
             display.getSize(size);
             int radius = menuButton.getHeight() / 2;
 
-            openOverlay = ViewAnimationUtils.createCircularReveal(backgroundView,
+            openOverlay = ViewAnimationUtils.createCircularReveal(mBackgroundView,
                     menuButton.getLeft() + radius, menuButton.getTop() + radius, radius,
                     Math.max(size.x, size.y));
         } else {
             if (openOverlay == null) {
-                openOverlay = ObjectAnimator.ofFloat(backgroundView, "alpha", 0f, 1f);
+                openOverlay = ObjectAnimator.ofFloat(mBackgroundView, "alpha", 0f, 1f);
                 openOverlay.setInterpolator(new AccelerateDecelerateInterpolator());
             }
         }
@@ -353,7 +359,7 @@ public class FloatingActionMenu extends ViewGroup {
         openOverlay.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
-                backgroundView.setVisibility(VISIBLE);
+                mBackgroundView.setVisibility(VISIBLE);
             }
         });
         return openOverlay;
@@ -368,7 +374,7 @@ public class FloatingActionMenu extends ViewGroup {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int height;
         final int count = getChildCount();
-        maxButtonWidth = 0;
+        int maxButtonWidth = 0;
 
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
@@ -420,7 +426,7 @@ public class FloatingActionMenu extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         if (changed) {
-            backgroundView.layout(l, 0, r, b);
+            mBackgroundView.layout(l, 0, r, b);
 
             int buttonsHorizontalCenter = r - l - menuButton.getMeasuredWidth() / 2 - getPaddingRight() - menuMarginEnd;
             int menuButtonTop = b - t - menuButton.getMeasuredHeight() - getPaddingBottom() - menuMarginBottom;
@@ -464,7 +470,7 @@ public class FloatingActionMenu extends ViewGroup {
                     if (!isOpen) {
                         item.setTranslationY(menuButton.getTop() - item.getTop());
                         item.setVisibility(INVISIBLE);
-                        backgroundView.setVisibility(INVISIBLE);
+                        mBackgroundView.setVisibility(INVISIBLE);
                     }
                 }
             }
