@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.ColorInt;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -243,6 +244,10 @@ public class FloatingActionMenu extends ViewGroup {
         item.setTag(label);
 
         label.setOnClickListener(onItemClickListener);
+    }
+
+    public void setOverlayColorRes(@ColorRes int colorRes) {
+        setOverlayColor(ContextCompat.getColor(getContext(), colorRes));
     }
 
     public void setOverlayColor(@ColorInt int overlayColor) {
