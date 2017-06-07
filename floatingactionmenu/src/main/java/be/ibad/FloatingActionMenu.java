@@ -390,7 +390,14 @@ public class FloatingActionMenu extends ViewGroup {
         closeOverlay.setDuration(overlayDuration);
         closeOverlay.addListener(new AnimatorListenerAdapter() {
             @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                mBackgroundView.setVisibility(GONE);
+            }
+
+            @Override
             public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
                 mBackgroundView.setVisibility(GONE);
             }
         });
