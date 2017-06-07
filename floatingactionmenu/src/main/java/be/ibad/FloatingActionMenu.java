@@ -80,7 +80,7 @@ public class FloatingActionMenu extends ViewGroup {
     @ColorInt
     private int labelBackgroundColor;
     @ColorInt
-    private int labelTextColor;
+    private int mLabelTextColor;
     private int menuMarginEnd;
     private int menuMarginBottom;
     private int overlayDuration;
@@ -113,15 +113,27 @@ public class FloatingActionMenu extends ViewGroup {
     };
 
     public FloatingActionMenu(Context context) {
-        this(context, null, 0);
+        super(context);
+        init(context, null);
     }
 
     public FloatingActionMenu(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        super(context, attrs);
+        init(context, attrs);
     }
 
     public FloatingActionMenu(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init(context, attrs);
+    }
+
+    static int dpToPx(Context context, float dp) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * scale);
+    }
+
+    private void init(Context context, AttributeSet attrs) {
+        setSaveEnabled(true);
         TypedArray attributes = context.getTheme()
                 .obtainStyledAttributes(attrs, R.styleable.FloatingActionMenu, 0, 0);
         TypedValue typedValue = new TypedValue();
@@ -148,7 +160,7 @@ public class FloatingActionMenu extends ViewGroup {
                     .getInteger(R.styleable.FloatingActionMenu_actions_duration, getResources().getInteger(android.R.integer.config_shortAnimTime));
             labelBackgroundColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_label_background, ContextCompat.getColor(getContext(), android.R.color.white));
-            labelTextColor = attributes
+            mLabelTextColor = attributes
                     .getColor(R.styleable.FloatingActionMenu_label_fontColor, Color.BLACK);
             labelTextSize = attributes
                     .getFloat(R.styleable.FloatingActionMenu_label_fontSize, 12f);
@@ -199,11 +211,6 @@ public class FloatingActionMenu extends ViewGroup {
         addView(mBackgroundView);
     }
 
-    static int dpToPx(Context context, float dp) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * scale);
-    }
-
     @Override
     protected void onFinishInflate() {
         bringChildToFront(mMenuButton);
@@ -239,7 +246,7 @@ public class FloatingActionMenu extends ViewGroup {
 
         TextView textView = (TextView) label.findViewById(R.id.label_text);
         textView.setText(item.getContentDescription());
-        textView.setTextColor(labelTextColor);
+        textView.setTextColor(mLabelTextColor);
         textView.setTextSize(labelTextSize);
 
         addView(label);
@@ -262,10 +269,14 @@ public class FloatingActionMenu extends ViewGroup {
         setMenuRippleColor(ContextCompat.getColor(getContext(), colorRes));
     }
 
-    public void setMenuButtonRes(@DrawableRes int mMenuButtonRes) {
-        this.mMenuButtonRes = mMenuButtonRes;
+    public void setLabelTextColorRes(@ColorRes int colorRes) {
+        setLabelTextColor(ContextCompat.getColor(getContext(), colorRes));
+    }
+
+    public void setMenuButtonRes(@DrawableRes int drawableRes) {
+        this.mMenuButtonRes = drawableRes;
         if (mMenuButton != null) {
-            mMenuButton.setImageResource(mMenuButtonRes);
+            mMenuButton.setImageResource(drawableRes);
         }
     }
 
@@ -287,6 +298,16 @@ public class FloatingActionMenu extends ViewGroup {
         this.mMenuRippleColor = color;
         if (mMenuButton != null) {
             mMenuButton.setRippleColor(mMenuRippleColor);
+        }
+    }
+
+    public void setLabelTextColor(@ColorInt int color) {
+        this.mLabelTextColor = color;
+        for (View menuLabel : menuLabels) {
+            TextView textView = (TextView) menuLabel.findViewById(R.id.label_text);
+            if (textView != null) {
+                textView.setTextColor(mLabelTextColor);
+            }
         }
     }
 
@@ -532,6 +553,11 @@ public class FloatingActionMenu extends ViewGroup {
         Bundle bundle = new Bundle();
         bundle.putParcelable("instanceState", super.onSaveInstanceState());
         bundle.putBoolean("openState", isOpen);
+        bundle.putInt("mLabelTextColor", mLabelTextColor);
+        bundle.putInt("mMenuButtonColor", mMenuButtonColor);
+        bundle.putInt("mMenuRippleColor", mMenuRippleColor);
+        bundle.putInt("mMenuButtonRes", mMenuButtonRes);
+        bundle.putInt("mOverlayColor", mOverlayColor);
         return bundle;
     }
 
@@ -539,8 +565,14 @@ public class FloatingActionMenu extends ViewGroup {
     public void onRestoreInstanceState(Parcelable state) {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
-            isOpen = bundle.getBoolean("openState");
             state = bundle.getParcelable("instanceState");
+            isOpen = bundle.getBoolean("openState");
+            mMenuButton.setRotation(isOpen ? 135f : 0f);
+            setLabelTextColor(bundle.getInt("mLabelTextColor"));
+            setMenuButtonColor(bundle.getInt("mMenuButtonColor"));
+            setMenuRippleColor(bundle.getInt("mMenuRippleColor"));
+            setMenuButtonRes(bundle.getInt("mMenuButtonRes"));
+            setOverlayColor(bundle.getInt("mOverlayColor"));
         }
 
         super.onRestoreInstanceState(state);
