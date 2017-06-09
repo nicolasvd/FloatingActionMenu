@@ -192,20 +192,11 @@ public class FloatingActionMenu extends ViewGroup {
 
         mBackgroundView = new View(getContext());
         mBackgroundView.setBackgroundColor(mOverlayColor);
-        mBackgroundView.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
-            @Override
-            public void onViewAttachedToWindow(View v) {
-                closeIconAnimator = ObjectAnimator.ofFloat(mMenuButton, "rotation", 135f, 0f).setDuration(actionsDuration);
-                closeIconAnimator.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
-                openIconAnimator = ObjectAnimator.ofFloat(mMenuButton, "rotation", 0f, 135f).setDuration(actionsDuration);
-                openIconAnimator.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
-            }
 
-            @Override
-            public void onViewDetachedFromWindow(View v) {
-
-            }
-        });
+        closeIconAnimator = ObjectAnimator.ofFloat(mMenuButton, "rotation", 135f, 0f).setDuration(actionsDuration);
+        closeIconAnimator.setInterpolator(DEFAULT_CLOSE_INTERPOLATOR);
+        openIconAnimator = ObjectAnimator.ofFloat(mMenuButton, "rotation", 0f, 135f).setDuration(actionsDuration);
+        openIconAnimator.setInterpolator(DEFAULT_OPEN_INTERPOLATOR);
 
         addViewInLayout(mMenuButton, -1, new ViewGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         addView(mBackgroundView);
@@ -351,22 +342,20 @@ public class FloatingActionMenu extends ViewGroup {
 
     protected void startCloseAnimator() {
         AnimatorSet closeSet = new AnimatorSet();
-        closeSet.play(getCloseOverlayAnimator()).with(closeIconAnimator);
-        closeSet.start();
-
+        AnimatorSet.Builder builder = closeSet.play(getCloseOverlayAnimator()).after(closeIconAnimator);
         for (ChildAnimator anim : itemAnimators) {
-            anim.getCloseAnimatorSet().start();
+            builder.after(anim.getCloseAnimatorSet());
         }
+        closeSet.start();
     }
 
     protected void startOpenAnimator() {
         AnimatorSet openSet = new AnimatorSet();
-        openSet.play(getOpenOverlayAnimator()).with(openIconAnimator);
-        openSet.start();
-
+        AnimatorSet.Builder builder = openSet.play(getOpenOverlayAnimator()).with(openIconAnimator);
         for (ChildAnimator anim : itemAnimators) {
-            anim.getOpenAnimatorSet().start();
+            builder.before(anim.getOpenAnimatorSet());
         }
+        openSet.start();
     }
 
     private Animator getCloseOverlayAnimator() {
@@ -648,6 +637,15 @@ public class FloatingActionMenu extends ViewGroup {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
+                    mChild.setVisibility(GONE);
+                    if (displayLabels) {
+                        mLabel.setVisibility(GONE);
+                    }
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    super.onAnimationCancel(animation);
                     mChild.setVisibility(GONE);
                     if (displayLabels) {
                         mLabel.setVisibility(GONE);
