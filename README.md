@@ -49,4 +49,4 @@ actions_duration = duration of the actions opening (default = 200)
             app:fabSize="mini" />
 
     </be.ibad.FloatingActionMenu>
-...
+```
